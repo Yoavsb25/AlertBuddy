@@ -19,7 +19,8 @@ def home(request):
         latest_alert = SafetyAlert.objects.filter(user=friend).order_by('-last_updated').first()
         friends[friend] = {
             'status': latest_alert.status if latest_alert else None,
-            'last_alert_time': latest_alert.last_updated if latest_alert else None
+            'last_alert_time': latest_alert.last_updated if latest_alert else None,
+            'last_location': latest_alert.user_location if latest_alert else None,
         }
 
     return render(request, 'home.html', {'friends': friends})

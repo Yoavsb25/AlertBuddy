@@ -30,7 +30,8 @@
                 </div>
             </div>
             <div class="friend-card-update">
-                Last update: {{ info.last_alert_time|date:"F j, Y, g:i a" |default:"Never" }}
+                <p>Last location: {{ info.last_location | default:"Unknown" }}</p>
+                <p>Last update: {{ info.last_alert_time|date:"F j, Y, g:i a" |default:"Never" }}</p>
             </div>
         </div>
     {% empty %}
