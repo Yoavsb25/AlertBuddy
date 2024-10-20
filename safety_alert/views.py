@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, User
 from django.contrib.auth import login, authenticate
 from django.db.models import Q
 from .models import SafetyAlert, Friendship, FriendRequest
-from .forms import SafetyAlertForm, UserSearchForm, ProfileImageForm
+from .forms import UserForm, UserSearchForm, ProfileImageForm
 
 
 @login_required
@@ -78,13 +78,22 @@ def update_safety_status(request):
 
 
 @login_required
-def profile(request):
-    return render(request, 'profile.html')
-
-
-@login_required
 def edit_profile(request):
-    return render(request, 'edit_profile.html')
+    user_form = UserForm(instance=request.user)  # User instance
+    profile_form = ProfileImageForm(instance=request.user.profile)  # Profile instance
+    old_image = request.user.profile.profile_image
+
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=request.user)
+        old_image.delete()
+        profile_form = ProfileImageForm(request.POST, request.FILES, instance=request.user.profile)  # Handle image uploads
+        if user_form.is_valid() and profile_form.is_valid():
+
+            user_form.save()
+            profile_form.save()
+            return redirect('profile')  # Redirect after saving
+
+    return render(request, 'safety_alert/edit_profile.html', {'user_form': user_form, 'profile_form': profile_form})
 
 
 @login_required
@@ -102,17 +111,20 @@ def upload_profile_image(request):
 
 
 def search_users(request):
-    search_term = request.POST.get('username', '') if request.method == 'POST' else ''
+    search_term = request.POST.get('username', '')
     users = User.objects.filter(username__icontains=search_term).exclude(id=request.user.id)
 
     friends = Friendship.objects.filter(Q(user1=request.user) | Q(user2=request.user))
     friend_ids = [friend.user2.id if friend.user1 == request.user else friend.user1.id for friend in friends]
 
-    return render(request, 'search_users.html', {
+    context = {
         'form': UserSearchForm(),
         'users': users,
         'friend_ids': friend_ids,
-    })
+        'search_term': search_term  # Optional: Include search term for display
+    }
+
+    return render(request, 'search_users.html', context)
 
 
 @login_required
