@@ -1,0 +1,25 @@
+{% extends 'safety_alert/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="card profile-card">
+    <h2 class="mb-2">User Profile</h2>
+
+    {% if user.profile.profile_image %}
+        <img src="{{ user.profile.profile_image.url }}" alt="Profile Image" class="profile-image" />
+    {% else %}
+        <div class="profile-image" style="background-color: #ccc; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 3rem; color: #fff;">{{ user.username|first|upper }}</span>
+        </div>
+    {% endif %}
+
+    <div class="profile-info">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Last Marked Safe:</strong> {{ user.last_marked_safe|default:"Not marked yet." }}</p>
+    </div>
+
+    <a href="{% url 'edit_profile' %}" class="edit-profile-btn">Edit Profile</a>
+</div>
+{% endblock %}

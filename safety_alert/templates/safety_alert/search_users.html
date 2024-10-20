@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Users{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="auth-title">Search for Friends</h2>
+    <form method="post" class="search-form">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Enter username" class="search-input">
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+
+    <h3 class="mb-2">All Users:</h3>
+    <ul id="user-list" class="user-list">
+        {% for user in users %}
+            <li class="user-item">
+                <div class="user-header">
+                    {% if user.profile.profile_image %}
+                        <img src="{{ user.profile.profile_image.url }}" alt="{{ user.username }}" class="user-image">
+                    {% else %}
+                        <div class="user-image" style="background-color: #1a73e8; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #ffffff; font-size: 1.5rem;">{{ user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <span class="user-username">{{ user.username }}</span>
+                </div>
+                <div class="user-actions">
+                    {% if user.id not in friend_ids %}
+                        <form method="post" action="{% url 'add_friend' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="user-btn add-friend-btn">Add Friend</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'remove_friend' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="user-btn remove-friend-btn">Remove Friend</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.querySelector('input[name="username"]');
+        const userList = document.getElementById('user-list');
+        const userItems = userList.querySelectorAll('.user-item');
+
+        searchInput.addEventListener('input', function () {
+            const searchTerm = searchInput.value.toLowerCase();
+            userItems.forEach(function (item) {
+                const username = item.querySelector('span').textContent.toLowerCase();
+                if (username.includes(searchTerm)) {
+                    item.style.display = '';  // Show the item
+                } else {
+                    item.style.display = 'none';  // Hide the item
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-profile-form">
+    <h2>Edit Profile</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="profile-image-container">
+            {% if user.profile.profile_image %}
+                <img src="{{ user.profile.profile_image.url }}" alt="Profile Image" class="edit-profile-image" id="profile-image-preview">
+            {% else %}
+                <img src="/path/to/default/image.jpg" alt="Default Profile Image" class="edit-profile-image" id="profile-image-preview">
+            {% endif %}
+            <label for="profile_image" class="edit-profile-image-label">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="profile_image" name="profile_image" class="edit-profile-image-input" accept="image/*">
+            <button type="button" id="upload-button" class="upload-btn">Upload Image</button>
+        </div>
+
+        <div class="edit-profile-info">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+
+            <!-- Add any other profile fields you want to edit -->
+        </div>
+
+        <button type="submit" class="edit-profile-btn">Save Changes</button>
+    </form>
+</div>
+
+<script>
+    // Preview the selected image before upload
+    document.getElementById('profile_image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('profile-image-preview').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Trigger file input when the upload button is clicked
+    document.getElementById('upload-button').addEventListener('click', function() {
+        document.getElementById('profile_image').click();
+    });
+</script>
+{% endblock %}

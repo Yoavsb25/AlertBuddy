@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Safety Alert{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'pending_friend_requests' %}">Pending requests</a></li>
+                <li><a href="{% url 'search_users' %}">Search</a></li>
+                <li><a href="{% url 'profile' %}">Profile</a></li>
+                <li><form action="{% url 'logout' %}" method="POST" class="btn btn-danger">
+                    {% csrf_token %}
+                        <button type="submit">Logout</button>
+                </form></li>
+                {% else %}
+                <li><a href="{% url 'login' %}">Login</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+    {% if user.is_authenticated %}
+    <h2>Mark Your Safety Status</h2>
+    <form method="post" action="{% url 'update_safety_status' %}" class="safety-status-form">
+        {% csrf_token %}
+        <label for="is_safe">Are you safe?</label>
+        <select name="is_safe" id="is_safe">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+
+        <label for="user_location">Your Location:</label>
+        <input type="text" name="user_location" id="user_location" placeholder="Enter your location" required>
+
+        <button type="submit">Submit</button>
+    </form>
+    {% endif %}
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Safety Alert</p>
+    </footer>
+</body>
+</html>
