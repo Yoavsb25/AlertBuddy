@@ -4,8 +4,9 @@ from django.http import HttpResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from .models import SafetyAlert, Friendship, FriendRequest
-from .forms import UserSearchForm, ProfileImageForm, CustomUserCreationForm, EmailAuthenticationForm
+from .forms import UserSearchForm, ProfileImageForm, CustomUserCreationForm, EmailAuthenticationForm, UserProfileEditForm
 
 
 @login_required
@@ -31,7 +32,7 @@ def signup(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.EmailBackend')
             return redirect('home')
     else:
         form = CustomUserCreationForm()
@@ -56,44 +57,42 @@ def user_login(request):
 @login_required
 def update_safety_status(request):
     if request.method == 'POST':
-        # Fix: Retrieve the correct 'is_safe' from the form
-        is_safe = request.POST.get('is_safe')
+        is_safe = request.POST.get('is_safe') == 'true'
         user_location = request.POST.get('user_location')
 
-        if is_safe is None or user_location is None:
-            return HttpResponse('Missing required fields', status=400)
+        if user_location:
+            SafetyAlert.objects.update_or_create(
+                user=request.user,
+                defaults={'status': is_safe, 'user_location': user_location}
+            )
+            return redirect('home')
 
-        # Convert the string 'true'/'false' to a boolean
-        is_safe = is_safe.lower() == 'true'
-
-        # Update or create the SafetyAlert instance for the user
-        safety_alert, created = SafetyAlert.objects.update_or_create(
-            user=request.user,
-            defaults={'status': is_safe, 'user_location': user_location}
-        )
-
-        return redirect('home')
-
-    return HttpResponse(status=405)  # Method not allowed if not POST
+    return HttpResponse('Missing required fields', status=400)
 
 
 @login_required
 def edit_profile(request):
-    user_form = CustomUserCreationForm(instance=request.user)  # User instance
-    profile_form = ProfileImageForm(instance=request.user.profile)  # Profile instance
-    old_image = request.user.profile.profile_image
+    user = request.user
+    user_form = UserProfileEditForm(instance=user)  # User instance
+    profile_form = ProfileImageForm(instance=user.profile)  # Profile instance
+    old_image = user.profile.profile_image
 
     if request.method == 'POST':
-        user_form = CustomUserCreationForm(request.POST, instance=request.user)
-        old_image.delete()
-        profile_form = ProfileImageForm(request.POST, request.FILES, instance=request.user.profile)  # Handle image uploads
-        if user_form.is_valid() and profile_form.is_valid():
+        user_form = UserProfileEditForm(request.POST, instance=user)
+        profile_form = ProfileImageForm(request.POST, request.FILES, instance=user.profile)  # Handle image uploads
 
+        if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            return redirect('profile')  # Redirect after saving
+            if old_image and not profile_form.cleaned_data.get('profile_image'):
+                old_image.delete()  # Delete old image only if no new image is uploaded
+            return redirect('profile')  # Redirect to profile page
 
-    return render(request, 'safety_alert/edit_profile.html', {'user_form': user_form, 'profile_form': profile_form})
+    return render(request, 'safety_alert/edit_profile.html', {
+        'user_form': user_form,
+        'profile_form': profile_form
+    })
+
 
 
 @login_required
@@ -159,13 +158,12 @@ def add_friend(request, user_id):
 @login_required
 def remove_friend(request, user_id):
     friend = get_object_or_404(User, id=user_id)
-    friendship = Friendship.objects.filter(
-        Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user)).first()
-
-    if friendship:
-        friendship.delete()
-
+    friendship = get_object_or_404(Friendship,
+                                   Q(user1=request.user, user2=friend) |
+                                   Q(user1=friend, user2=request.user))
+    friendship.delete()
     return redirect('search_users')
+
 
 
 @login_required
