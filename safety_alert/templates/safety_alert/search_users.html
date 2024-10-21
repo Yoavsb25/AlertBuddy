@@ -28,10 +28,14 @@
                     </div>
                     <div class="user-actions">
                         {% if user.id not in friend_ids %}
-                            <form method="post" action="{% url 'add_friend' user.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="user-btn add-friend-btn">Add Friend</button>
-                            </form>
+                            {% if user.id in pending_user_ids %}
+                                <button class="user-btn btn-default" disabled>Pending</button>
+                            {% else %}
+                                <form method="post" action="{% url 'add_friend' user.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="user-btn add-friend-btn">Add Friend</button>
+                                </form>
+                            {% endif %}
                         {% else %}
                             <form method="post" action="{% url 'remove_friend' user.id %}">
                                 {% csrf_token %}

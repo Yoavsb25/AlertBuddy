@@ -552,6 +552,7 @@ footer {
 
 /* Styling for the inline "Mark Your Safety Status" form */
 .safety-status-form {
+    justify-content: space-evenly;
     display: flex;
     align-items: center;
     background-color: #e8f0fe;
@@ -559,6 +560,10 @@ footer {
     border-radius: 8px;
     margin-bottom: 1rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.safety-status-form:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .safety-status-form h2 {

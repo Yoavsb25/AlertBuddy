@@ -117,11 +117,16 @@ def search_users(request):
     friends = Friendship.objects.filter(Q(user1=request.user) | Q(user2=request.user))
     friend_ids = [friend.user2.id if friend.user1 == request.user else friend.user1.id for friend in friends]
 
+    # Get all sent friend requests by the current user
+    pending_requests = FriendRequest.objects.filter(sender=request.user)
+    pending_user_ids = [req.receiver.id for req in pending_requests]
+
     context = {
         'form': UserSearchForm(),
         'users': users,
         'friend_ids': friend_ids,
-        'search_term': search_term  # Optional: Include search term for display
+        'pending_user_ids': pending_user_ids,  # Pass pending request IDs
+        'search_term': search_term
     }
 
     return render(request, 'search_users.html', context)
@@ -129,10 +134,25 @@ def search_users(request):
 
 @login_required
 def add_friend(request, user_id):
-    if request.method == 'POST':
-        friend = get_object_or_404(User, id=user_id)
-        FriendRequest.objects.create(sender=request.user, receiver=friend)
-        return redirect('search_users')
+    friend = get_object_or_404(User, id=user_id)
+
+    # Check if there's already a pending or accepted friend request
+    existing_request = FriendRequest.objects.filter(sender=request.user, receiver=friend).first()
+    existing_friendship = Friendship.objects.filter(
+        Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user)
+    ).first()
+
+    if existing_request:
+        # Friend request already sent, prevent sending another one
+        return redirect('search_users')  # Optionally add a message to inform the user
+
+    if existing_friendship:
+        # Friendship already exists
+        return redirect('search_users')  # Optionally add a message to inform the user
+
+    # If no existing request or friendship, create a new friend request
+    FriendRequest.objects.create(sender=request.user, receiver=friend)
+    return redirect('search_users')
 
 
 @login_required
