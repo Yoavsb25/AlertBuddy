@@ -18,8 +18,16 @@ class SafetyAlert(models.Model):
 class FriendRequest(models.Model):
     sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
+    is_pending = models.BooleanField(default=True)  # True if request is still pending, False if processed
     created_at = models.DateTimeField(auto_now_add=True)
-    is_accepted = models.BooleanField(default=False)
+
+    def accept(self):
+        self.is_pending = False
+        self.save()
+
+    def reject(self):
+        self.is_pending = False
+        self.delete()
 
     def __str__(self):
         return f"{self.sender} -> {self.receiver}"
