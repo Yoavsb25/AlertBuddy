@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, User
 from django.contrib.auth import login, authenticate
+from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import SafetyAlert, Friendship, FriendRequest
-from .forms import UserForm, UserSearchForm, ProfileImageForm, CustomUserCreationForm
+from .forms import UserSearchForm, ProfileImageForm, CustomUserCreationForm, EmailAuthenticationForm
 
 
 @login_required
@@ -40,16 +40,16 @@ def signup(request):
 
 def user_login(request):
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
+        form = EmailAuthenticationForm(data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
+            email = form.cleaned_data.get('username')  # The form uses 'username' field for email
             password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user:
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
                 login(request, user)
                 return redirect('home')
     else:
-        form = AuthenticationForm()
+        form = EmailAuthenticationForm()
     return render(request, 'safety_alert/login.html', {'form': form})
 
 
@@ -79,12 +79,12 @@ def update_safety_status(request):
 
 @login_required
 def edit_profile(request):
-    user_form = UserForm(instance=request.user)  # User instance
+    user_form = CustomUserCreationForm(instance=request.user)  # User instance
     profile_form = ProfileImageForm(instance=request.user.profile)  # Profile instance
     old_image = request.user.profile.profile_image
 
     if request.method == 'POST':
-        user_form = UserForm(request.POST, instance=request.user)
+        user_form = CustomUserCreationForm(request.POST, instance=request.user)
         old_image.delete()
         profile_form = ProfileImageForm(request.POST, request.FILES, instance=request.user.profile)  # Handle image uploads
         if user_form.is_valid() and profile_form.is_valid():

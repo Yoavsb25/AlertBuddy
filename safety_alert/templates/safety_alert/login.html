@@ -5,7 +5,7 @@
 {% block content %}
 <div class="auth-card">
     <h2 class="auth-title">Login</h2>
-    <form method="POST" class="auth-form">
+    <form method="POST" class="auth-form" action="{% url 'login' %}">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" class="auth-btn">Login</button>
