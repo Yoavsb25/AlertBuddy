@@ -5,14 +5,13 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, User
 from django.contrib.auth import login, authenticate
 from django.db.models import Q
 from .models import SafetyAlert, Friendship, FriendRequest
-from .forms import UserForm, UserSearchForm, ProfileImageForm
+from .forms import UserForm, UserSearchForm, ProfileImageForm, CustomUserCreationForm
 
 
 @login_required
 def home(request):
     friendships = Friendship.objects.filter(Q(user1=request.user) | Q(user2=request.user))
     friends = {}
-
 
     for friendship in friendships:
         friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
@@ -21,6 +20,7 @@ def home(request):
             'status': latest_alert.status if latest_alert else None,
             'last_alert_time': latest_alert.last_updated if latest_alert else None,
             'last_location': latest_alert.user_location if latest_alert else None,
+            'full_name': f"{friend.first_name} {friend.last_name}"  # Include full name
         }
 
     return render(request, 'home.html', {'friends': friends})
@@ -28,14 +28,14 @@ def home(request):
 
 def signup(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('home')
     else:
-        form = UserCreationForm()
-    return render(request, 'safety_alert/login.html', {'form': form})
+        form = CustomUserCreationForm()
+    return render(request, 'safety_alert/signup.html', {'form': form})
 
 
 def user_login(request):

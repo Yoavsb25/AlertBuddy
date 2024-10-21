@@ -15,7 +15,7 @@
     {% endif %}
 
     <div class="profile-info">
-        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Full name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
         <p><strong>Email:</strong> {{ user.email }}</p>
         <p><strong>Last Marked Safe:</strong> {{ user.last_marked_safe|default:"Not marked yet." }}</p>
     </div>

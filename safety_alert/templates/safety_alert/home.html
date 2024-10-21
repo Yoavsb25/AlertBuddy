@@ -3,8 +3,6 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-
-
     <h2>Your Friends' Safety Status</h2>
 
     <div class="friend-feed">
@@ -14,10 +12,10 @@
                 {% if friend.profile.profile_image %}
                     <img src="{{ friend.profile.profile_image.url }}" alt="{{ friend.username }}" class="friend-card-image">
                 {% else %}
-                    <div class="friend-card-image" style="background-color: #ccc;"></div>
+                    <div class="friend-card-image"></div>
                 {% endif %}
                 <div class="friend-card-info">
-                    <div class="friend-card-name">{{ friend.username }}</div>
+                    <div class="friend-card-name">{{ info.full_name }}</div>
                     <div class="friend-card-status">
                         {% if info.status is True %}
                             Safe
