@@ -34,10 +34,11 @@
         <form id="safety-status-form" method="post" action="{% url 'update_safety_status' %}" class="safety-status-form">
             {% csrf_token %}
             <label for="is_safe">Are you safe?</label>
-            <select name="status" id="status" required>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-            </select>
+            <input type="radio" id="safe-yes" name="status" value="true" required>
+            <label for="safe-yes" class="toggle-option">Yes</label>
+
+            <input type="radio" id="safe-no" name="status" value="false" required>
+            <label for="safe-no" class="toggle-option">No</label>
 
             <label for="city">Your City:</label>
             <input type="text" name="city" id="city" placeholder="Enter your city..." required>
