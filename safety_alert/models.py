@@ -8,10 +8,14 @@ class SafetyAlert(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
     user_location = models.CharField(max_length=255, blank=True, null=True)
+    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0)
+    city = models.CharField(max_length=100, blank=True, null=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user} - {'Safe' if self.status else 'Not Safe'}"
+
 
 class FriendRequest(models.Model):
     sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)

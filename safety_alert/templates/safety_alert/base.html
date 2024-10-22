@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Safety Alert{% endblock %}</title>
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     <header>
@@ -13,7 +13,7 @@
             <ul>
                 <li><a href="{% url 'home' %}">Home</a></li>
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'pending_friend_requests' %}">Pending requests</a></li>
+                <li><a href="{% url 'pending_friend_requests' %}">Pending Requests</a></li>
                 <li><a href="{% url 'search_users' %}">Search</a></li>
                 <li><a href="{% url 'profile' %}">Profile</a></li>
                 <li><a href="{% url 'logout' %}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
@@ -22,34 +22,90 @@
                 </form>
                 {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>
+                <li><a href="{% url 'signup' %}">Sign Up</a></li>
                 {% endif %}
             </ul>
         </nav>
     </header>
 
     <main>
-    {% if user.is_authenticated %}
-    <h2>Mark Your Safety Status</h2>
-    <form method="post" action="{% url 'update_safety_status' %}" class="safety-status-form">
-        {% csrf_token %}
-        <label for="is_safe">Are you safe?</label>
-        <select name="is_safe" id="is_safe">
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-        </select>
+        {% if user.is_authenticated %}
+        <h2>Mark Your Safety Status</h2>
+        <form id="safety-status-form" method="post" action="{% url 'update_safety_status' %}" class="safety-status-form">
+            {% csrf_token %}
+            <label for="is_safe">Are you safe?</label>
+            <select name="status" id="status" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
 
-        <label for="user_location">Your Location:</label>
-        <input type="text" name="user_location" id="user_location" placeholder="Enter your location" required>
+            <label for="city">Your City:</label>
+            <input type="text" name="city" id="city" placeholder="Enter your city..." required>
 
-        <button type="submit">Submit</button>
-    </form>
-    {% endif %}
-        {% block content %}
-        {% endblock %}
+            <!-- Hidden fields to store latitude and longitude -->
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+
+            <div class="button-group">
+                <button type="button" class="btn-primary" onclick="getLocation()">Get Current Location</button>
+                <button type="submit" class="btn-primary">Submit</button>
+            </div>
+        </form>
+        {% endif %}
+    {% block content %}
+    {% endblock %}
     </main>
 
     <footer>
-        <p>&copy; 2024 Safety Alert</p>
+        <p>&copy; 2024 Safety Alert. All rights reserved.</p>
     </footer>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+
+                        // Set the values in hidden fields
+                        document.getElementById('latitude').value = latitude;
+                        document.getElementById('longitude').value = longitude;
+
+                        // Fetch city name using reverse geocoding
+                        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const city = data.address.city || data.address.town || data.address.village; // Fallback if city is not found
+                                document.getElementById('city').value = city || "Unknown City"; // Set the city value in the form
+                            })
+                            .catch(error => {
+                                console.error('Error retrieving city:', error);
+                                alert("Unable to retrieve city information. Please enter your city manually.");
+                            });
+                    },
+                    function(error) {
+                        console.error('Error occurred. Error code: ' + error.code);
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                alert("User denied the request for Geolocation.");
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                alert("Location information is unavailable.");
+                                break;
+                            case error.TIMEOUT:
+                                alert("The request to get user location timed out.");
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                alert("An unknown error occurred.");
+                                break;
+                        }
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+    </script>
 </body>
 </html>

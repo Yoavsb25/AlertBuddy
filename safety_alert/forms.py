@@ -23,11 +23,13 @@ class UserProfileEditForm(forms.ModelForm):
 class SafetyAlertForm(forms.ModelForm):
     class Meta:
         model = SafetyAlert
-        fields = ['user_location', 'status']
+        fields = ['user_location', 'city', 'status']
         widgets = {
             'status': forms.RadioSelect(choices=[(True, 'Safe'), (False, 'Not Safe')]),
             'user_location': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label='Email', max_length=254)

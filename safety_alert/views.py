@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -21,7 +21,8 @@ def home(request):
             'status': latest_alert.status if latest_alert else None,
             'last_alert_time': latest_alert.last_updated if latest_alert else None,
             'last_location': latest_alert.user_location if latest_alert else None,
-            'full_name': f"{friend.first_name} {friend.last_name}"  # Include full name
+            'city': latest_alert.city if latest_alert else None,
+            'full_name': f"{friend.first_name} {friend.last_name}"
         }
 
     return render(request, 'home.html', {'friends': friends})
@@ -57,24 +58,49 @@ def user_login(request):
 @login_required
 def update_safety_status(request):
     if request.method == 'POST':
-        is_safe = request.POST.get('is_safe') == 'true'
+        is_safe = request.POST.get('status') == 'true'
         user_location = request.POST.get('user_location')
+        city = request.POST.get('city')
+        latitude = request.POST.get('latitude', None)
+        longitude = request.POST.get('longitude', None)
 
-        if user_location:
-            SafetyAlert.objects.update_or_create(
-                user=request.user,
-                defaults={'status': is_safe, 'user_location': user_location}
-            )
-            return redirect('home')
+        # Save the safety status along with the location data
+        safety_alert = SafetyAlert(
+            user=request.user,
+            status=is_safe,
+            user_location=user_location,
+            city=city,
+            latitude=0,
+            longitude=0
+        )
+        if latitude:
+            safety_alert.latitude = latitude
+        if longitude:
+            safety_alert.longitude = longitude
+        safety_alert.save()
 
-    return HttpResponse('Missing required fields', status=400)
+        return redirect('home')
 
+    return JsonResponse({'success': False})
+
+@login_required
+def profile_view(request):
+    # Get the latest SafetyAlert for the current user
+    latest_alert = SafetyAlert.objects.filter(user=request.user).order_by('-last_updated').first()
+
+    # Pass the latest alert to the template
+    return render(request, 'safety_alert/profile.html', {
+        'user': request.user,
+        'latest_alert': latest_alert,
+        'status': latest_alert.status if latest_alert else None,
+        'city': latest_alert.city if latest_alert else None,
+    })
 
 @login_required
 def edit_profile(request):
     user = request.user
-    user_form = UserProfileEditForm(instance=user)  # User instance
-    profile_form = ProfileImageForm(instance=user.profile)  # Profile instance
+    user_form = UserProfileEditForm(instance=user)
+    profile_form = ProfileImageForm(instance=user.profile)
     old_image = user.profile.profile_image
 
     if request.method == 'POST':
