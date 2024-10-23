@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 class SafetyAlert(models.Model):
@@ -13,6 +14,7 @@ class SafetyAlert(models.Model):
     longitude = models.FloatField(blank=True, null=True, default=0)
     city = models.CharField(max_length=100, blank=True, null=True)  # City name
     last_updated = models.DateTimeField(auto_now=True)  # Automatically updates to current time on save
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.user.username} - {'Safe' if self.status else 'Not Safe'}"
@@ -23,7 +25,7 @@ class FriendRequest(models.Model):
     sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
     is_pending = models.BooleanField(default=True)  # Indicates if the request is still pending
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when request was created
+    created_at = models.DateTimeField(default=timezone.now)  # Timestamp when request was created
 
     def accept(self):
         self.is_pending = False
@@ -41,7 +43,7 @@ class FriendRequest(models.Model):
 class Friendship(models.Model):
     user1 = models.ForeignKey(User, related_name='friendships1', on_delete=models.CASCADE)
     user2 = models.ForeignKey(User, related_name='friendships2', on_delete=models.CASCADE)
-
+    created_at = models.DateTimeField(default=timezone.now)
     class Meta:
         unique_together = ('user1', 'user2')  # Ensure that each friendship is unique
 
@@ -55,6 +57,8 @@ class Profile(models.Model):
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)  # Profile image field
+    created_at = models.DateTimeField(default=timezone.now)
+    last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Profile of {self.user.username}"
