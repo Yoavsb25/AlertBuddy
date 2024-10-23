@@ -5,134 +5,112 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.core.exceptions import ValidationError
+import os
 from .models import SafetyAlert, Friendship, FriendRequest
-from .forms import UserSearchForm, ProfileImageForm, CustomUserCreationForm, EmailAuthenticationForm, UserProfileEditForm
+from .forms import UserSearchForm, UserRegistrationForm, UserAuthenticationForm, UserProfileForm
 
 
 @login_required
 def home(request):
     friendships = Friendship.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    friends = {}
-
-    for friendship in friendships:
-        friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
-        latest_alert = SafetyAlert.objects.filter(user=friend).order_by('-last_updated').first()
-        friends[friend] = {
-            'status': latest_alert.status if latest_alert else None,
+    friends = {
+        (friendship.user2 if friendship.user1 == request.user else friendship.user1): {
+            'status': latest_alert.status if (latest_alert := SafetyAlert.objects.filter(user=friendship.user2 if friendship.user1 == request.user else friendship.user1).order_by('-last_updated').first()) else None,
             'last_alert_time': latest_alert.last_updated if latest_alert else None,
             'last_location': latest_alert.user_location if latest_alert else None,
             'city': latest_alert.city if latest_alert else None,
-            'full_name': f"{friend.first_name} {friend.last_name}"
-        }
-
+            'full_name': f"{friendship.user1.first_name} {friendship.user1.last_name}"
+        } for friendship in friendships
+    }
     return render(request, 'home.html', {'friends': friends})
 
 
 def signup(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user, backend='django.contrib.auth.backends.EmailBackend')
             return redirect('home')
     else:
-        form = CustomUserCreationForm()
-    return render(request, 'safety_alert/signup.html', {'form': form})
+        form = UserRegistrationForm()
+    return render(request, 'signup.html', {'form': form})
+
 
 
 def user_login(request):
     if request.method == 'POST':
-        form = EmailAuthenticationForm(data=request.POST)
+        form = UserAuthenticationForm(data=request.POST)
         if form.is_valid():
-            email = form.cleaned_data.get('username')  # The form uses 'username' field for email
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=email, password=password)
+            user = authenticate(request, username=form.cleaned_data.get('username'), password=form.cleaned_data.get('password'))
             if user is not None:
                 login(request, user)
                 return redirect('home')
     else:
-        form = EmailAuthenticationForm()
-    return render(request, 'safety_alert/login.html', {'form': form})
+        form = UserAuthenticationForm()
+    return render(request, 'login.html', {'form': form})
 
 
 @login_required
-def update_safety_status(request):
+def update_safety_status(request, longitude=0, latitude=0):
     if request.method == 'POST':
+        if request.POST.get('latitude', 0):
+            latitude = request.POST.get('latitude', 0)
+        if request.POST.get('longitude', 0):
+            longitude = request.POST.get('longitude', 0)
+
         is_safe = request.POST.get('status') == 'true'
-        user_location = request.POST.get('user_location')
-        city = request.POST.get('city')
-        latitude = request.POST.get('latitude', None)
-        longitude = request.POST.get('longitude', None)
+        location_data = {
+            'user_location': request.POST.get('user_location'),
+            'city': request.POST.get('city'),
+            'latitude': latitude,
+            'longitude': longitude,
+        }
 
-        # Save the safety status along with the location data
-        safety_alert = SafetyAlert(
-            user=request.user,
-            status=is_safe,
-            user_location=user_location,
-            city=city,
-            latitude=0,
-            longitude=0
-        )
-        if latitude:
-            safety_alert.latitude = latitude
-        if longitude:
-            safety_alert.longitude = longitude
-        safety_alert.save()
-
+        SafetyAlert.objects.create(user=request.user, status=is_safe, **location_data)
         return redirect('home')
 
     return JsonResponse({'success': False})
 
+
 @login_required
 def profile_view(request):
-    # Get the latest SafetyAlert for the current user
     latest_alert = SafetyAlert.objects.filter(user=request.user).order_by('-last_updated').first()
-
-    # Pass the latest alert to the template
-    return render(request, 'safety_alert/profile.html', {
+    return render(request, 'profile.html', {
         'user': request.user,
         'latest_alert': latest_alert,
-        'status': latest_alert.status if latest_alert else None,
+        'status': ('Safe' if latest_alert.status == 'true' else 'Not Safe') if latest_alert else None,
         'city': latest_alert.city if latest_alert else None,
     })
 
+
 @login_required
 def edit_profile(request):
-    user = request.user
-    user_form = UserProfileEditForm(instance=user)
-    profile_form = ProfileImageForm(instance=user.profile)
-    old_image = user.profile.profile_image
+    profile = request.user.profile  # Get the current user's profile instance
+    old_image = profile.profile_image  # Store the old image
+
+    profile_form = UserProfileForm(instance=profile)
 
     if request.method == 'POST':
-        user_form = UserProfileEditForm(request.POST, instance=user)
-        profile_form = ProfileImageForm(request.POST, request.FILES, instance=user.profile)  # Handle image uploads
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
+        if profile_form.is_valid():
+            # Check if the profile image has changed
+            if 'profile_image' in request.FILES and old_image:
+                # Construct the full path to the old image
+                old_image_path = old_image.path
+
+                # Delete the old image file if it exists
+                if os.path.isfile(old_image_path):
+                    os.remove(old_image_path)
+
+            # Save the new profile instance
             profile_form.save()
-            if old_image and not profile_form.cleaned_data.get('profile_image'):
-                old_image.delete()  # Delete old image only if no new image is uploaded
-            return redirect('profile')  # Redirect to profile page
+            return redirect('profile')
 
-    return render(request, 'safety_alert/edit_profile.html', {
-        'user_form': user_form,
+    return render(request, 'edit_profile.html', {
         'profile_form': profile_form
     })
-
-
-
-@login_required
-def upload_profile_image(request):
-    if request.method == 'POST':
-        form = ProfileImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            profile = request.user.profile
-            profile.profile_image = form.cleaned_data['profile_image']
-            profile.save()
-            return redirect('profile')
-    else:
-        form = ProfileImageForm()
-    return render(request, 'upload_profile_image.html', {'form': form})
 
 
 def search_users(request):
@@ -142,7 +120,6 @@ def search_users(request):
     friends = Friendship.objects.filter(Q(user1=request.user) | Q(user2=request.user))
     friend_ids = [friend.user2.id if friend.user1 == request.user else friend.user1.id for friend in friends]
 
-    # Get all sent friend requests by the current user that are still pending
     pending_requests = FriendRequest.objects.filter(sender=request.user, is_pending=True)
     pending_user_ids = [req.receiver.id for req in pending_requests]
 
@@ -150,64 +127,44 @@ def search_users(request):
         'form': UserSearchForm(),
         'users': users,
         'friend_ids': friend_ids,
-        'pending_user_ids': pending_user_ids,  # Pass pending request IDs
+        'pending_user_ids': pending_user_ids,
         'search_term': search_term
     }
-
     return render(request, 'search_users.html', context)
-
 
 
 @login_required
 def add_friend(request, user_id):
     friend = get_object_or_404(User, id=user_id)
+    existing_request = FriendRequest.objects.filter(sender=request.user, receiver=friend, is_pending=True).exists()
+    existing_friendship = Friendship.objects.filter(Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user)).exists()
 
-    # Check if there's already a pending or accepted friend request
-    existing_request = FriendRequest.objects.filter(sender=request.user, receiver=friend, is_pending=True).first()
-    existing_friendship = Friendship.objects.filter(
-        Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user)
-    ).first()
+    if not existing_request and not existing_friendship:
+        FriendRequest.objects.create(sender=request.user, receiver=friend)
 
-    if existing_request:
-        # Friend request already sent and is still pending
-        return redirect('search_users')
-
-    if existing_friendship:
-        # Friendship already exists
-        return redirect('search_users')
-
-    # If no pending request or friendship, create a new friend request
-    FriendRequest.objects.create(sender=request.user, receiver=friend)
     return redirect('search_users')
 
 
 @login_required
 def remove_friend(request, user_id):
     friend = get_object_or_404(User, id=user_id)
-    friendship = get_object_or_404(Friendship,
-                                   Q(user1=request.user, user2=friend) |
-                                   Q(user1=friend, user2=request.user))
+    friendship = get_object_or_404(Friendship, Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user))
     friendship.delete()
     return redirect('search_users')
-
 
 
 @login_required
 def pending_friend_requests(request):
     pending_requests = FriendRequest.objects.filter(receiver=request.user, is_pending=True)
-    return render(request, 'safety_alert/pending_requests.html', {'pending_requests': pending_requests})
-
+    return render(request, 'pending_requests.html', {'pending_requests': pending_requests})
 
 
 @login_required
 def approve_friend_request(request, request_id):
-    friend_request = get_object_or_404(FriendRequest, id=request_id)
+    friend_request = get_object_or_404(FriendRequest, id=request_id, receiver=request.user)
 
     if friend_request.receiver == request.user:
-        # Create the friendship
         Friendship.objects.create(user1=friend_request.receiver, user2=friend_request.sender)
-
-        # Mark the friend request as processed
         friend_request.accept()
 
     return redirect('pending_friend_requests')
@@ -216,10 +173,6 @@ def approve_friend_request(request, request_id):
 @login_required
 def decline_friend_request(request, request_id):
     friend_request = get_object_or_404(FriendRequest, id=request_id, receiver=request.user)
-
-    # Instead of deleting, mark the request as processed
     friend_request.reject()
 
     return redirect('pending_friend_requests')
-
-

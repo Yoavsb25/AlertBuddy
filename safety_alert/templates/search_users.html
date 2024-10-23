@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
-
 {% block title %}Search Users{% endblock %}
-
+{% load static %}
 {% block content %}
 <div class="card">
     <h2 class="auth-title">Search for Friends</h2>
@@ -50,24 +49,10 @@
         {% endif %}
     </ul>
 </div>
-
+<script src="{% static 'js/app.js' %}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.querySelector('input[name="username"]');
-        const userList = document.getElementById('user-list');
-        const userItems = userList.querySelectorAll('.user-item');
-
-        searchInput.addEventListener('input', function () {
-            const searchTerm = searchInput.value.toLowerCase();
-            userItems.forEach(function (item) {
-                const username = item.querySelector('.user-username').textContent.toLowerCase();
-                if (username.includes(searchTerm)) {
-                    item.style.display = '';  // Show the item
-                } else {
-                    item.style.display = 'none';  // Hide the item
-                }
-            });
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        filterUserList();
     });
 </script>
 {% endblock %}

@@ -38,7 +38,7 @@ ROOT_URLCONF = 'SafetyProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'safety_alert' / 'templates' / 'safety_alert'],
+        'DIRS': [BASE_DIR / 'safety_alert' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
