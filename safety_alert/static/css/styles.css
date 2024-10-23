@@ -609,7 +609,8 @@ footer {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-.safety-status-form button[type="submit"] {
+.safety-status-form button[type="submit"],
+#upload-button {
     background-color: #34a853;
     color: #ffffff;
     padding: 0.5rem 1rem;
@@ -620,7 +621,8 @@ footer {
     transition: all 0.3s ease;
 }
 
-.safety-status-form button[type="submit"]:hover {
+.safety-status-form button[type="submit"]:hover,
+#upload-button:hover {
     background-color: #2d8e47;
     transform: translateY(-2px);
     box-shadow: 0 2px 5px rgba(52, 168, 83, 0.3);
