@@ -4,7 +4,6 @@ from django.http import JsonResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.core.exceptions import ValidationError
 import os
 from .models import SafetyAlert, Friendship, FriendRequest
 from .forms import UserSearchForm, UserRegistrationForm, UserAuthenticationForm, UserProfileForm
