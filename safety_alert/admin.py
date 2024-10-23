@@ -2,14 +2,14 @@ from django.contrib import admin
 from .models import SafetyAlert, Profile, Friendship
 
 class SafetyAlertAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'status', 'user_location', 'created_at')
+    list_display = ('id', 'user', 'status', 'city', 'created_at')
     list_filter = ('status', 'created_at', 'user')
-    search_fields = ('user__username', 'user_location')
+    search_fields = ('user__username', 'city')
     ordering = ('-created_at',)
 
     fieldsets = (
         (None, {
-            'fields': ('user', 'user_location', 'status')
+            'fields': ('user', 'city', 'status')
         }),
         ('Additional Information', {
             'fields': ('created_at', 'last_updated'),

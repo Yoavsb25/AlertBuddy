@@ -59,9 +59,8 @@ class SafetyAlertForm(forms.ModelForm):
 
     class Meta:
         model = SafetyAlert
-        fields = ['user_location', 'city', 'status']
+        fields = ['city', 'status']
         widgets = {
-            'user_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Your Location'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
             'status': forms.RadioSelect(choices=[(True, 'Safe'), (False, 'Not Safe')]),
         }

@@ -16,7 +16,6 @@ def home(request):
         (friendship.user2 if friendship.user1 == request.user else friendship.user1): {
             'status': latest_alert.status if (latest_alert := SafetyAlert.objects.filter(user=friendship.user2 if friendship.user1 == request.user else friendship.user1).order_by('-last_updated').first()) else None,
             'last_alert_time': latest_alert.last_updated if latest_alert else None,
-            'last_location': latest_alert.user_location if latest_alert else None,
             'city': latest_alert.city if latest_alert else None,
             'full_name': f"{friendship.user1.first_name} {friendship.user1.last_name}"
         } for friendship in friendships
@@ -60,7 +59,6 @@ def update_safety_status(request, longitude=0, latitude=0):
 
         is_safe = request.POST.get('status') == 'true'
         location_data = {
-            'user_location': request.POST.get('user_location'),
             'city': request.POST.get('city'),
             'latitude': latitude,
             'longitude': longitude,

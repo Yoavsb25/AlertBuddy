@@ -8,8 +8,6 @@ from django.core.exceptions import ValidationError
 class SafetyAlert(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='safety_alerts')
     status = models.BooleanField(default=False)  # Indicates if the user is safe
-    user_location = models.CharField(max_length=255, blank=True, null=True)
-    location = models.CharField(max_length=255, blank=True, null=True)  # User's location information
     latitude = models.FloatField(blank=True, null=True, default=0)
     longitude = models.FloatField(blank=True, null=True, default=0)
     city = models.CharField(max_length=100, blank=True, null=True)  # City name
