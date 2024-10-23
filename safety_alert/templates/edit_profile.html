@@ -16,7 +16,7 @@
             {% if user.profile.profile_image %}
                 <img src="{{ user.profile.profile_image.url }}" alt="Profile Image" class="edit-profile-image" id="profile-image-preview">
             {% else %}
-                <img src="/path/to/default/image.jpg" alt="Default Profile Image" class="edit-profile-image" id="profile-image-preview">
+                <img src="/media/profile_images/default-no-profile-image.png" alt="Default Profile Image" class="edit-profile-image" id="profile-image-preview">
             {% endif %}
             <label for="profile_image" class="edit-profile-image-label">
                 <i class="fas fa-camera"></i>
