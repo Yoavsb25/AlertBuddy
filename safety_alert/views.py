@@ -96,13 +96,13 @@ def edit_profile(request):
         if profile_form.is_valid():
 
             # Check if the profile image has changed
-            if 'profile_image' in request.FILES:
+            if 'profile_image' in request.FILES and (request.FILES['profile_image'] != old_image):
                 # Only delete the old image if a new one has been uploaded
                 old_image.delete()
+                profile.profile_image = request.FILES['profile_image']
 
             # Save the profile instance with the new image
-            profile.profile_image = request.FILES['profile_image']
-            profile.save()
+            profile_form.save()
             return redirect('profile')  # Redirect to the profile or success page
 
     return render(request, 'edit_profile.html', {
@@ -145,8 +145,14 @@ def add_friend(request, user_id):
 @login_required
 def remove_friend(request, user_id):
     friend = get_object_or_404(User, id=user_id)
-    friendship = get_object_or_404(Friendship, Q(user1=request.user, user2=friend) | Q(user1=friend, user2=request.user))
-    friendship.delete()
+    friendships = Friendship.objects.filter(
+        Q(user1=request.user, user2=friend) |
+        Q(user1=friend, user2=request.user)
+    )
+
+    # Delete all friendships found
+    friendships.delete()
+
     return redirect('search_users')
 
 

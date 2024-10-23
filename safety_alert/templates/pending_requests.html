@@ -15,7 +15,7 @@
                             <span style="color: #ffffff; font-size: 1.5rem;">{{ request.sender.username|first|upper }}</span>
                         </div>
                     {% endif %}
-                    <span class="friend-request-username">{{ request.sender.username }}</span>
+                    <span class="friend-request-username">{{ request.sender.first_name }} {{ request.sender.last_name }}</span>
                 </div>
                 <div class="friend-request-actions">
                     <form method="post" action="{% url 'approve_friend_request' request.id %}">
