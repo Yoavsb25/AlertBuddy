@@ -628,6 +628,46 @@ footer {
     box-shadow: 0 2px 5px rgba(52, 168, 83, 0.3);
 }
 
+/* Hide the default radio buttons */
+.safety-status-form input[type="radio"] {
+    display: none; /* Hide the default radio button */
+}
+
+/* Style the labels to look like buttons with reduced size */
+.safety-status-form .toggle-option {
+    display: inline-block;
+    padding: 0.3rem 0.5rem; /* Reduce padding */
+    margin-right: 0.5rem; /* Reduce margin */
+    background-color: #f0f0f0; /* Default background color */
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem; /* Reduce font size */
+    transition: background-color 0.3s ease;
+}
+
+/* Change background color when the radio is checked */
+.safety-status-form input[type="radio"]:checked + .toggle-option {
+    color: white; /* Change text color when selected */
+}
+
+/* Change background color on hover for Yes */
+.safety-status-form #safe-yes:hover + .toggle-option,
+.safety-status-form input[type="radio"]:checked#safe-yes + .toggle-option {
+    background-color: #34a853; /* Green for Yes */
+}
+
+/* Change background color on hover for No */
+.safety-status-form #safe-no:hover + .toggle-option,
+.safety-status-form input[type="radio"]:checked#safe-no + .toggle-option {
+    background-color: #e63946; /* Red for No */
+}
+
+/* Ensure correct spacing for the labels */
+.safety-status-form .toggle-option {
+    margin-right: 5px; /* Space between options */
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     nav ul {
