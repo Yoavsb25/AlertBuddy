@@ -27,13 +27,30 @@ class UserRegistrationForm(UserCreationForm):
         user.username = self.cleaned_data['email']  # Use email as username
         user.first_name = self.cleaned_data['first_name'].capitalize()
         user.last_name = self.cleaned_data['last_name'].capitalize()
+
         if commit:
             user.save()
+
+            # Use get_or_create to avoid creating duplicate profiles
+            profile, created = Profile.objects.get_or_create(
+                user=user,  # Ensure it's linked to the correct user
+                defaults={
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                }
+            )
+
+            if not created:
+                # Update profile fields if the profile already exists
+                profile.first_name = user.first_name
+                profile.last_name = user.last_name
+                profile.save()
+
         return user
 
 
 class UserProfileForm(forms.ModelForm):
-    """Form for editing user profile information and uploading a profile image."""
+    """Form for editing user profile information and synchronizing with User model."""
 
     class Meta:
         model = Profile
@@ -44,6 +61,13 @@ class UserProfileForm(forms.ModelForm):
             'profile_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(UserProfileForm, self).__init__(*args, **kwargs)
+        if self.instance:  # Set initial values from the User model
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+
     def save(self, commit=True):
         profile = super().save(commit=False)
         profile.first_name = self.cleaned_data['first_name'].capitalize()
@@ -51,6 +75,13 @@ class UserProfileForm(forms.ModelForm):
 
         if commit:
             profile.save()
+
+            # Update the User model's first name and last name as well
+            user = profile.user
+            user.first_name = profile.first_name
+            user.last_name = profile.last_name
+            user.save()
+
         return profile
 
 

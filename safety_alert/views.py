@@ -83,27 +83,27 @@ def profile_view(request):
 
 @login_required
 def edit_profile(request):
-    profile = request.user.profile  # Get the current user's profile instance
+    # Get the current user's profile instance
+    profile = request.user.profile
     old_image = profile.profile_image  # Store the old image
 
+    # Initialize the form with the profile instance
     profile_form = UserProfileForm(instance=profile)
 
     if request.method == 'POST':
         profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
 
         if profile_form.is_valid():
+
             # Check if the profile image has changed
-            if 'profile_image' in request.FILES and old_image:
-                # Construct the full path to the old image
-                old_image_path = old_image.path
+            if 'profile_image' in request.FILES:
+                # Only delete the old image if a new one has been uploaded
+                old_image.delete()
 
-                # Delete the old image file if it exists
-                if os.path.isfile(old_image_path):
-                    os.remove(old_image_path)
-
-            # Save the new profile instance
-            profile_form.save()
-            return redirect('profile')
+            # Save the profile instance with the new image
+            profile.profile_image = request.FILES['profile_image']
+            profile.save()
+            return redirect('profile')  # Redirect to the profile or success page
 
     return render(request, 'edit_profile.html', {
         'profile_form': profile_form

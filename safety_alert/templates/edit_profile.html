@@ -4,12 +4,6 @@
 <div class="edit-profile-form">
     <h2>Edit Profile</h2>
 
-    {% if user_form.errors %}
-        <div class="error-messages">
-            {{ user_form.errors }}
-        </div>
-    {% endif %}
-
     {% if profile_form.errors %}
         <div class="error-messages">
             {{ profile_form.errors }}
@@ -27,28 +21,16 @@
             <label for="profile_image" class="edit-profile-image-label">
                 <i class="fas fa-camera"></i>
             </label>
-            <input type="file" id="profile_image" name="profile_image" class="edit-profile-image-input" accept="image/*" style="display: none;">
+            <input type="file" id="profile_image" name="profile_image" class="edit-profile-image-input" accept="image/*">
             <button type="button" id="upload-button" class="upload-btn">Upload Image</button>
         </div>
 
-        <div class="form-group">
-            {{ user_form.username.label_tag }}
-            {{ user_form.username }}
-        </div>
+        <div class="edit-profile-info">
+            <label for="first_name">First name:</label>
+            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
 
-        <div class="form-group">
-            {{ user_form.email.label_tag }}
-            {{ user_form.email }}
-        </div>
-
-        <div class="form-group">
-            {{ profile_form.first_name.label_tag }}
-            {{ profile_form.first_name }}
-        </div>
-
-        <div class="form-group">
-            {{ profile_form.last_name.label_tag }}
-            {{ profile_form.last_name }}
+            <label for="last_name">Last name:</label>
+            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
         </div>
 
         <button type="submit" class="edit-profile-btn">Save Changes</button>

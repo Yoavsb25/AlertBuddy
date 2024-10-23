@@ -38,12 +38,11 @@ class SafetyAlertAdmin(admin.ModelAdmin):
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'first_name', 'last_name', 'profile_image', 'created_at')
+    list_display = ('user', 'get_first_name', 'get_last_name', 'profile_image', 'created_at')
     search_fields = ('user__username', 'first_name', 'last_name')
     ordering = ('created_at',)
 
-    exclude = ('last_updated',)
-    readonly_fields = ('created_at', 'last_updated')
+    readonly_fields = ('created_at',)
 
     fieldsets = (
         (None, {
@@ -58,6 +57,16 @@ class UserProfileAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('user')  # Optimize queries
+
+    # Add methods to fetch first_name and last_name from the user model
+    def get_first_name(self, obj):
+        return obj.first_name or obj.user.first_name
+
+    def get_last_name(self, obj):
+        return obj.last_name or obj.user.last_name
+
+    get_first_name.short_description = 'First Name'
+    get_last_name.short_description = 'Last Name'
 
 
 class FriendshipAdmin(admin.ModelAdmin):
