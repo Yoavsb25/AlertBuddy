@@ -1,13 +1,3 @@
-Here's a README for the two projects:
-
----
-
-# 📂 Projects Overview  
-
-This repository contains two unique web-based applications designed to solve real-world challenges. These projects leverage modern web technologies and demonstrate proficiency in full-stack development.  
-
----
-
 ## 🚨 **Alert Buddy**  
 
 A platform for users to mark themselves safe during emergencies, enabling real-time updates on the safety of friends and family without direct communication.  
